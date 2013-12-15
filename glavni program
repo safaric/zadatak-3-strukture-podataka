@@ -1,0 +1,292 @@
+#include<iostream>
+#include<cstring>
+#include<ctime>
+#include "red_polje.h"
+//#include "red_pokazivac.h"
+
+//a. dio
+element *polje;
+int generiraj(){//fja za generiranje
+    srand(time(0));
+    int n,i;
+    bool ponovo;
+    
+    cout << "Koliko pacijenata generirati? "; cin >> n;
+    polje = new element [n];
+    
+    //generiranje brojeva
+    for(i=0;i<n;i++){
+        polje[i].ai = rand()%250+50;
+        polje[i].bi = rand()%250+50;
+        polje[i].ci = rand()%5+1;
+        polje[i].di = rand()%4+1;
+        
+        //nemogući scenariji
+        do{
+            ponovo = false;
+            polje[i].ei = rand()%5+1;
+            
+            switch(polje[i].ei){
+                case 2:case 3:case 5:
+                    if(polje[i].ci==3 || polje[i].ci==4) ponovo = true;
+                    break;
+                case 1:
+                    if(polje[i].ci==3 || polje[i].ci==1) ponovo = true;
+                    break;
+                case 4:
+                    if(polje[i].ci==4) ponovo = true;
+                }
+        }while(ponovo);
+        }
+    cout << endl;
+    
+    return n;
+    }
+
+//b. dio
+void sortiraj(red *r){//fja za sort
+    int i;
+    element p;
+    red *pomocni1=InitQ(pomocni1),*pomocni2=InitQ(pomocni2);
+
+    //sortiranje
+    for(i=1;i<=5;i++){
+        while(!IsEmptyQ(r)){
+            p = FrontQ(r);
+            DeQueueQ(r);
+            if(p.ci==i) EnQueueQ(p,pomocni1);
+            else EnQueueQ(p,pomocni2);
+            }
+         
+        while(!IsEmptyQ(pomocni2)){
+            p = FrontQ(pomocni2);
+            DeQueueQ(pomocni2);
+            EnQueueQ(p,r);
+            }
+        }
+    
+    //vracanje na originalni red
+    while(!IsEmptyQ(pomocni1)){
+        p = FrontQ(pomocni1);
+        DeQueueQ(pomocni1);
+        EnQueueQ(p,r);
+        }
+    }
+
+void dodavanje(red *r, int n){//fja za dodavanje (nesortirano)
+    int i,j,d=0;
+    element p;
+    
+    //upis i dodavanje
+    for(i=0;i<n;i++)
+        for(j=0;j<3;j++){
+            cout << "Ime: "; cin >> p.ime;
+            cout << "Prezime: "; cin >> p.prezime;
+            cout << "Datum rodenja: "; cin >> p.datum;
+            cout << "Spol (m/z): "; cin >> p.spol;
+            
+            d=0;
+            d+=(p.datum[7]-48)*1000;
+            d+=(p.datum[8]-48)*100;
+            d+=(p.datum[9]-48)*10;
+            d+=p.datum[10]-48;
+            d = 2013 - d;
+            
+            p.ai = polje[i].ai;
+            p.bi = polje[i].bi;
+            if((p.spol=='m' && polje[i].ci==3) || (d>6 && polje[i].ci==4)) polje[i].ci = 5;
+            p.ci = polje[i].ci;
+            p.di = polje[i].di;
+            polje[i].ei = rand()%5+1;
+            if(polje[i].ei==4 && p.spol=='m') polje[i].ei = 5;
+            p.ei = polje[i].ei;
+            
+            EnQueueQ(p,r);
+            }
+    sortiraj(r); //funkcija za ispis redoslijeda posluživanja
+    
+    //ispis pacijentica
+    red *pomocni = InitQ(pomocni);
+    bool ima = false;
+    
+    cout << "Pacijentice starije od 25 g (oftalmologija): " << endl;
+    while(!IsEmptyQ(r)){
+        p = FrontQ(r);
+        DeQueueQ(r);
+        EnQueueQ(p,pomocni);
+        }
+    
+    while(!IsEmptyQ(pomocni)){
+        p = FrontQ(pomocni);
+        DeQueueQ(pomocni);
+        
+        d = 0;
+        d+=(p.datum[7]-48)*1000;
+        d+=(p.datum[8]-48)*100;
+        d+=(p.datum[9]-48)*10;
+        d+=p.datum[10]-48;
+        d = 2013 - d;
+        
+        if(d>25 && p.ei==2 && p.spol=='z'){
+            cout << p.ime << " " << p.prezime << endl << endl;
+            ima = true;
+            }
+        EnQueueQ(p,r);
+        }
+    if(!ima) cout << "Nema takvih pacijentica." << endl << endl;
+    }
+
+//c. dio
+void ispis(red *r){
+    element p;
+    red *pomocni = InitQ(pomocni);
+    
+    while(!IsEmptyQ(r)){
+        p = FrontQ(r);
+        
+        cout << p.ime << " " << p.prezime << " je ";
+        switch(p.ci){
+            case 1: cout << "hitni slucaj "; break;
+            case 2: cout << "invalid "; break;
+            case 3: cout << "trudnica "; break;
+            case 4: cout << "dijete "; break;
+            case 5: cout << "pacijent "; break;
+            }
+        cout << "dosao/la ";
+        switch(p.di){
+            case 1: cout << "na pregled. "; break;
+            case 2: cout << "na previjanje. "; break;
+            case 3: cout << "po recept. "; break;
+            case 4: cout << "po uputnicu. "; break;
+            }
+        cout << endl << "Ide na ";
+        switch(p.ei){
+            case 1: cout << "odjel obiteljske medicine."; break;
+            case 2: cout << "oftalmologiju."; break;
+            case 3: cout << "dermatovenerologiju."; break;
+            case 4: cout << "ginekologiju."; break;
+            case 5: cout << "urologiju."; break;
+            }
+            
+        DeQueueQ(r);
+        EnQueueQ(p,pomocni);
+        cout << endl << endl;
+        }
+    
+    while(!IsEmptyQ(pomocni)){
+        p = FrontQ(pomocni);
+        DeQueueQ(pomocni);
+        EnQueueQ(p,r);
+        }
+    }
+
+void brisanje(red *r){
+    element p;
+    red *pomocni = InitQ(pomocni);
+    bool ima = false;
+    int d=0;
+    
+    cout << "Sljedeci invalidi stariji od 50 godina (obiteljska medicina) su maknuti:" << endl;
+    while(!IsEmptyQ(r)){
+        p = FrontQ(r);
+        DeQueueQ(r);
+        EnQueueQ(p,pomocni);
+        }
+    
+    while(!IsEmptyQ(pomocni)){
+        p = FrontQ(pomocni);
+        DeQueueQ(pomocni);
+        
+        d=0;
+        d+=(int(p.datum[6])-48)*1000;
+        d+=(int(p.datum[7])-48)*100;
+        d+=(int(p.datum[8])-48)*10;
+        d+=int(p.datum[9])-48;
+        d = 2013 - d;
+        
+        if(d>50 && p.ei==1 && p.ci==2){
+            cout << p.ime << " " << p.prezime << endl << endl;
+            ima = true;
+            }
+        else EnQueueQ(p,r);
+        }
+    if(!ima) cout << "Nema takvih pacijenata." << endl << endl;
+    
+    cout << "CEKAONICA: " << endl;
+    ispis(r);
+    }
+
+//d. dio
+red *novi = InitQ(novi);
+void brzi(red *r,int i){
+    element p;
+    
+    if(IsEmptyQ(r)) return;
+    else{
+        p=FrontQ(r);
+        DeQueueQ(r);
+        brzi(r,++i);
+        }
+        
+    static int n=int(0.7*i);
+    
+    if(i>n) EnQueueQ(p,novi);
+    else EnQueueQ(p,r);
+    }
+    
+void vrati(red *r){
+    element p;
+    if(IsEmptyQ(r)) return;
+    else{
+        p=FrontQ(r);
+        DeQueueQ(r);
+        vrati(r);
+        }
+    EnQueueQ(p,r);
+    }
+
+int main(){
+    int n,broj;
+    red *r = InitQ(r);
+    bool alociran = false;
+    
+    do{
+        cout << "1. Generiranje brojeva" << endl
+             << "2. Dodavanje zapisa o pacijentima u red" << endl
+             << "3. Brisanje invalida starijih od 50 godina (previjanje)" << endl
+             << "4. Red brzih usluga" << endl 
+             << "9. Izlaz iz programa" << endl << endl;
+        cin >> n;
+        
+        switch(n){
+            case 1: 
+                broj = generiraj();
+                if(broj) alociran = true;
+                break;
+            
+            case 2:
+                if(alociran) dodavanje(r,broj);
+                else cout << "Brojevi nisu generirani!" << endl << endl;
+                break;
+            
+            case 3:
+                if(alociran) brisanje(r);
+                else cout << "Brojevi nisu generirani!" << endl << endl;
+                break;
+                
+            case 4:
+                if(alociran){
+                    brzi(r,0);
+                    vrati(r);
+                    cout << "BRZI RED: " << endl << endl;
+                    ispis(novi);
+                    cout << "STARI RED: " << endl << endl;
+                    ispis(r);
+                    }
+                else cout << "Brojevi nisu generirani!" << endl << endl;
+                break;
+            }
+    }while(n!=9);
+    
+    return 0;
+    }
